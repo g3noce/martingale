@@ -22,7 +22,7 @@ int main(int argc, char const *argv[]){
         }
         
         wheel = rand() % 1000;//simulation wheel
-        if (wheel > 0 && wheel < 492)// I put 492 / 1000 instead of 495 because I noticed that in the long term there's a 3 / 1000 percentage shift.
+        if (wheel >= 0 && wheel < 492)// I put 492 / 1000 instead of 495 because I noticed that in the long term there's a 3 / 1000 percentage shift.
         {
             k += 1*bet;//I multiply by the number of bets to see the short-term variance.
             balance += bet;
