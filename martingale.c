@@ -16,7 +16,7 @@ int main(int argc, char const *argv[]){
     for (int i = 0; i < 1000; i++)// loop for the long term math
     {
     while (balance <= 2048){//limit of the small wallet when it doubles
-        if (balance - bet <= 0){//if the next loss the small wallet is negative then we stop betting
+        if (balance <= bet){//if the next bet is smaller than the small wallet, we stop betting
             bet = 1;
             break;
         }
