@@ -13,14 +13,19 @@ int main(int argc, char const *argv[]){
     int bet = 1;// minimum bet
     int k = 0;//win percentage
     int j = 0;//loss percentage
-    for (int i = 0; i < 1000; i++)// loop for the long term math
+    for (int i = 0; i < 100000000; i++)// loop for the long term math
     {
-    while (balance <= 2048){//limit of the small wallet when it doubles
-        if (balance <= bet){//if the next bet is smaller than the small wallet, we stop betting
+        if (balance <= bet){// if it's a loss down
             bet = 1;
-            break;
+            bankroll += balance;
+            balance = 1024;
+            bankroll -= balance;
         }
-        
+        else if (balance >= 2048){//if it's a double up
+            bankroll += balance;
+            balance = 1024;
+            bankroll -= balance;
+        }
         wheel = rand() % 1000;//simulation wheel
         if (wheel >= 0 && wheel < 492)// I put 492 / 1000 instead of 495 because I noticed that in the long term there's a 3 / 1000 percentage shift.
         {
@@ -35,17 +40,6 @@ int main(int argc, char const *argv[]){
             //printf("loss %d balance %d\n", bet,balance);
             bet = bet*2;
         }
-    }
-    if (balance >= 2048){//if it's a double up
-        bankroll += balance;
-        balance = 1024;
-        bankroll -= balance;
-    }
-    else{// if it's a loss down
-        bankroll += balance;
-        balance = 1024;
-        bankroll -= balance;
-    }
     }
     printf("bankroll : %d\ncashout : %d\n", bankroll, bankroll - 10240);
     printf("p(win)%f , p(loss)%f\n",(float)k/(k+j), (float)j/(k+j));// percentage of wins and losses (with variance view option)
