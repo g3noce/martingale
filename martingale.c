@@ -3,44 +3,99 @@
 #include <math.h>
 #include <time.h>
 
-//[RAPPEL DE COMPILATION](pour Mingw en C) : gcc main.c -o main.exe
+#define INITIAL_BALANCE 1024
+#define INITIAL_BANKROLL 10240
+#define MAX_BALANCE 2048
+#define MIN_BET 1
+#define ITERATIONS 100000000
+#define WHEEL_MAX 1000
+#define WIN_THRESHOLD 492
 
-int main(int argc, char const *argv[]){
+int main(int argc, char const *argv[]) {
     srand((unsigned int)time(NULL));
-    int balance = 1024;// a small wallet to limit bets
-    int bankroll = 10240;//global money usable by the wallet
-    int wheel = 0;//
-    int bet = 1;// minimum bet
-    int k = 0;//win percentage
-    int j = 0;//loss percentage
-    for (int i = 0; i < 100000000; i++)// loop for the long term math
-    {
-        if (balance <= bet){// if it's a loss down
-            bet = 1;
+    
+    long long totalWins = 0;
+    long long totalLosses = 0;
+    int balance = INITIAL_BALANCE;
+    long long bankroll = INITIAL_BANKROLL;
+    int bet = MIN_BET;
+    
+    // Tracking variables
+    long long maxBankroll = bankroll;
+    int currentLossStreak = 0;
+    int maxLossStreak = 0;
+    int finalLossStreak = 0;
+    int bankruptcyIteration = 0;
+    
+    printf("Simulation started...\n");
+    printf("Initial balance: %d\n", INITIAL_BALANCE);
+    printf("Initial bankroll: %lld\n\n", bankroll);
+
+    for (int i = 0; i < ITERATIONS; i++) {
+        if (balance <= bet) {
             bankroll += balance;
-            balance = 1024;
+            balance = INITIAL_BALANCE;
             bankroll -= balance;
+            bet = MIN_BET;
+            
+            if (bankroll < 0) {
+                bankruptcyIteration = i;
+                finalLossStreak = currentLossStreak;
+                break;
+            }
         }
-        else if (balance >= 2048){//if it's a double up
+        else if (balance >= MAX_BALANCE) {
             bankroll += balance;
-            balance = 1024;
+            balance = INITIAL_BALANCE;
             bankroll -= balance;
+            bet = MIN_BET;
         }
-        wheel = rand() % 1000;//simulation wheel
-        if (wheel >= 0 && wheel < 492)// I put 492 / 1000 instead of 495 because I noticed that in the long term there's a 3 / 1000 percentage shift.
-        {
-            k += 1*bet;//I multiply by the number of bets to see the short-term variance.
+
+        if (bankroll > maxBankroll) {
+            maxBankroll = bankroll;
+        }
+
+        int wheel = rand() % WHEEL_MAX;
+        
+        if (wheel < WIN_THRESHOLD) {
+            totalWins += bet;
             balance += bet;
-            //printf("win %d balance %d\n", bet,balance);
-            bet = 1;
-        } else// if it's a loos
-        {
-            j += 1*bet;//I multiply by the number of bets to see the short-term variance.
+            bet = MIN_BET;
+            currentLossStreak = 0;
+        } else {
+            totalLosses += bet;
             balance -= bet;
-            //printf("loss %d balance %d\n", bet,balance);
-            bet = bet*2;
+            currentLossStreak++;
+            
+            if (currentLossStreak > maxLossStreak) {
+                maxLossStreak = currentLossStreak;
+            }
+            
+            if ((long long)bet * 2 > INT_MAX) {
+                printf("Error: Bet overflow at iteration %d\n", i);
+                bet = MIN_BET;
+            } else {
+                bet *= 2;
+            }
+        }
+
+        if (i % 10000000 == 0 && i > 0) {
+            printf("Progress: %d%%\n", i / (ITERATIONS / 100));
         }
     }
-    printf("bankroll : %d\ncashout : %d\n", bankroll, bankroll - 10240);
-    printf("p(win)%f , p(loss)%f\n",(float)k/(k+j), (float)j/(k+j));// percentage of wins and losses (with variance view option)
+
+    printf("\nFinal Results:\n");
+    printf("Iterations before bankruptcy: %d\n", bankruptcyIteration);
+    printf("Maximum bankroll reached: %lld (profit of %lld)\n", 
+           maxBankroll, maxBankroll - INITIAL_BANKROLL);
+    printf("Final bankroll: %lld (profit/loss of %lld)\n", 
+           bankroll, bankroll - INITIAL_BANKROLL);
+    printf("Longest loss streak: %d\n", maxLossStreak);
+    printf("Fatal streak length: %d\n", finalLossStreak);
+    
+    double winRate = (double)totalWins / (totalWins + totalLosses);
+    printf("Win rate: %.4f%%\n", winRate * 100);
+    printf("Loss rate: %.4f%%\n", (1 - winRate) * 100);
+
+    return 0;
 }
